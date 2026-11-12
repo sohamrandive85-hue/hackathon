@@ -51,7 +51,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .meta a{color:var(--accent)}
 .kv{font-size:14px;margin:3px 0}.kv b{font-weight:500}.kv.none{color:var(--muted)}
 .tag{font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid}
-.tag.confirmed{color:var(--accent);border-color:var(--accent)}.tag.inferred{color:var(--warn);border-color:var(--warn)}
+.tag.confirmed{color:var(--accent);border-color:var(--accent)}.tag.likely{color:#2563EB;border-color:#2563EB}.tag.inferred{color:var(--warn);border-color:var(--warn)}
 .tag.type{color:var(--muted);border-color:var(--line)}.tag.high{color:var(--bad);border-color:var(--bad)}
 .acts{display:flex;gap:8px;margin-top:10px}.acts button{padding:4px 12px;font-size:13px}
 .acts .ok{color:var(--accent);border-color:var(--accent)}.acts .no{color:var(--bad)}
@@ -130,12 +130,16 @@ const legend = '<div class="legend">' + Object.entries(GC).map(([k, c]) => `<spa
 function card(i) {
   const ed = editing === i.id;
   const link = i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">commit ${i.sha.slice(0, 7)}</a>` : (i.sha ? `commit ${i.sha.slice(0, 7)}` : "");
-  const tags = `<span class="tag type">${TYPES[i.type]}</span><span class="tag ${i.confidence}">${i.confidence === "confirmed" ? "Confirmed from source" : "Inferred, not confirmed"}</span>` +
+  const confText = i.confidence === "confirmed" ? "Confirmed from source" : (i.confidence === "likely" ? "Likely (code & AST)" : "Inferred, not confirmed");
+  const pct = i.confidence_score !== undefined ? ` (${Math.round(i.confidence_score * 100)}%)` : "";
+  const tags = `<span class="tag type">${TYPES[i.type]}</span><span class="tag ${i.confidence}">${confText}${pct}</span>` +
     (i.priority === "high" ? '<span class="tag high">Departing member\'s task</span>' : "") + (i.edited ? '<span class="tag type">Edited</span>' : "");
   const body = ed ? `<div class="edit"><label>Title<textarea id="e-title">${esc(i.title)}</textarea></label><label>Why<textarea id="e-why">${esc(i.why)}</textarea></label><label>Alternatives considered<textarea id="e-alt">${esc(i.alternative)}</textarea></label></div>`
     : `<h3>${esc(i.title)}</h3><div class="meta">${i.author ? `<span>${esc(i.author)}</span>` : ""}${i.date ? `<span>${i.date}</span>` : ""}${link ? `<span>${link}</span>` : ""}<span>${esc((i.modules || []).join(", "))}</span></div>
     ${i.why ? `<div class="kv"><b>Why:</b> ${esc(i.why)}</div>` : '<div class="kv none">No reason stated in the source.</div>'}
-    ${i.type === "decision" ? (i.alternative ? `<div class="kv"><b>Alternative considered:</b> ${esc(i.alternative)}</div>` : '<div class="kv none">No alternative recorded.</div>') : ""}`;
+    ${i.type === "decision" ? (i.alternative ? `<div class="kv"><b>Alternative considered:</b> ${esc(i.alternative)}</div>` : '<div class="kv none">No alternative recorded.</div>') : ""}
+    ${i.trade_offs ? `<div class="kv"><b>Trade-offs:</b> ${esc(i.trade_offs)}</div>` : ""}
+    ${i.ast_summary ? `<div class="kv" style="font-size:12px;color:var(--muted)"><b>AST diff context:</b> ${esc(i.ast_summary)}</div>` : ""}`;
   const btns = S === "published" ? "" : ed
     ? `<button class="ok" onclick="act('${i.id}','edit',{title:$('#e-title').value,why:$('#e-why').value,alternative:$('#e-alt').value})">Save changes</button><button onclick="editing=null;render()">Cancel</button>`
     : `<button class="ok" onclick="act('${i.id}','approve')">Approve</button><button class="no" onclick="act('${i.id}','reject')">Reject</button><button onclick="editing='${i.id}';render()">Edit</button>${i.status !== "pending" ? `<button onclick="act('${i.id}','reset')">Reset</button>` : ""}`;
@@ -157,7 +161,7 @@ function render() {
     let list = items.filter(i => tab === "tasks" ? i.type === "task" : i.type !== "task");
     if (tab === "review") list = list.filter(i => (filt.type === "all" || i.type === filt.type) && (filt.conf === "all" || i.confidence === filt.conf));
     pane.innerHTML = (tab === "review" ? `<div class="bar"><select onchange="filt.type=this.value;render()">${["all", "decision", "conflict", "risk", "dependency"].map(t => `<option value="${t}" ${filt.type === t ? "selected" : ""}>${t === "all" ? "All types" : TYPES[t]}</option>`).join("")}</select>
-      <select onchange="filt.conf=this.value;render()">${[["all", "All confidence"], ["confirmed", "Confirmed"], ["inferred", "Inferred"]].map(([v, l]) => `<option value="${v}" ${filt.conf === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <select onchange="filt.conf=this.value;render()">${[["all", "All confidence"], ["confirmed", "Confirmed"], ["likely", "Likely"], ["inferred", "Inferred"]].map(([v, l]) => `<option value="${v}" ${filt.conf === v ? "selected" : ""}>${l}</option>`).join("")}</select>
       <span class="sp"></span><span class="tag type">${list.length} shown</span></div>` : `<div class="note">Work that commit messages mark as unfinished. Approve what the next owner should pick up.</div>`) +
       (list.map(card).join("") || '<div class="empty">Nothing here for this repository.</div>');
   } else if (tab === "handover") {
