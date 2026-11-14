@@ -1,36 +1,57 @@
 """Repository analysis: commits -> contribution map, dependency graph, decisions, open work."""
-import collections, hashlib, itertools, json, os, re, shutil, subprocess, tempfile
+import collections, hashlib, itertools, json, os, re, shutil, subprocess, tempfile, base64
 import networkx as nx
 from ast_analyzer import analyze_commit_ast, format_ast_summary
 from llm.engine import extract_decisions_hybrid
 
 # ---------------------------------------------------------------- ingestion
-def _git(args):
-    r = subprocess.run(["git"] + args, capture_output=True, text=True, timeout=180)
+def _git(args, env=None):
+    merged_env = os.environ.copy()
+    if env:
+        merged_env.update(env)
+    r = subprocess.run(["git"] + args, capture_output=True, text=True, timeout=180, env=merged_env)
     if r.returncode:
-        raise ValueError(r.stderr.strip()[-300:] or "git command failed")
+        err = r.stderr.strip()[-300:] or "git command failed"
+        # Scrub any potential tokens or credentials from error text
+        err = re.sub(r"Authorization:[^\s]+", "Authorization: [REDACTED]", err, flags=re.I)
+        err = re.sub(r"Basic\s+[a-zA-Z0-9+/=]+", "Basic [REDACTED]", err, flags=re.I)
+        err = re.sub(r"([a-zA-Z0-9_]{24,})", "[REDACTED]", err)
+        raise ValueError(err)
     return r.stdout
 
 
-def load_commits(source):
-    """Return (commits, base_url). Source: 'demo', GitHub URL, owner/repo, or a local path."""
+def load_commits(source, token=None, provider=None):
+    """Return (commits, base_url). Source: 'demo', GitHub URL, owner/repo, or a local path.
+    Authenticates remote clones using git extraHeader subprocess ENV."""
     src = source.strip()
     if src.lower() == "demo":
         return demo_commits(), ""
     if not os.path.isdir(src) and re.match(r"^[\w.-]+/[\w.-]+$", src):
         src = "https://github.com/" + src
+
+    git_env = {}
+    if token and re.match(r"^(https?://)", src):
+        prov = (provider or ("gitlab" if "gitlab" in src.lower() else "github")).lower()
+        auth_str = f"oauth2:{token}" if prov == "gitlab" else f"x-access-token:{token}"
+        b64_auth = base64.b64encode(auth_str.encode()).decode()
+        git_env = {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "http.extraHeader",
+            "GIT_CONFIG_VALUE_0": f"Authorization: Basic {b64_auth}",
+        }
+
     tmp = None
     try:
         if re.match(r"^(https?://|git@)", src):
             tmp = tempfile.mkdtemp()
-            _git(["clone", "--bare", "--filter=blob:none", "--depth", "300", src, tmp])
+            _git(["clone", "--bare", "--filter=blob:none", "--depth", "300", src, tmp], env=git_env)
             path = tmp
         elif os.path.isdir(src):
             path = src
         else:
             raise ValueError("Enter a GitHub URL, owner/repo, a local repository path, or 'demo'.")
         out = _git(["-C", path, "log", "-n", "300", "--name-only",
-                    "--pretty=format:%x1d%H%x1f%an%x1f%aI%x1f%s%x1f%b%x1e"])
+                    "--pretty=format:%x1d%H%x1f%an%x1f%aI%x1f%s%x1f%b%x1e"], env=git_env)
         
         commits = []
         for chunk in out.split("\x1d")[1:]:
