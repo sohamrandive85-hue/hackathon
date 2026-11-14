@@ -1,47 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ContinuAI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<title>ContinuAI — Project knowledge handover</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <style>
-:root{--bg:#EEF1F4;--surface:#fff;--ink:#16202B;--muted:#5B6877;--line:#D5DBE2;--accent:#0B6B5D;--warn:#9A5B00;--bad:#A8281F;--r:6px}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
-header{background:var(--ink);color:#fff;padding:14px 28px;display:flex;align-items:baseline;gap:14px}
-header b{font-size:19px;letter-spacing:.2px}header span{color:#A9B4C2;font-size:14px}
-.shell{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px 28px;max-width:1280px;margin:auto}
-aside,.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
-aside h2{font-size:15px;margin:0 0 12px}aside h2:not(:first-child){margin-top:24px}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:12px}
-input,select,textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);font:inherit;color:var(--ink);background:#fff}
-input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-button{font:inherit;cursor:pointer;border-radius:var(--r);padding:7px 14px;border:1px solid var(--line);background:#fff;color:var(--ink)}
-button:hover{border-color:#9AA5B1}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:100%;padding:9px}
-button.primary:hover{background:#085448}button:disabled{opacity:.5;cursor:not-allowed}
-button.link{border:0;background:none;color:var(--accent);padding:8px 0;text-decoration:underline}
-.err{color:var(--bad);font-size:13px;margin-top:8px}
-ul.recent{list-style:none;margin:0;padding:0;font-size:13px}
-ul.recent li{padding:7px 0;border-top:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;gap:8px}
-ul.recent li:hover{color:var(--accent)}ul.recent small{color:var(--muted)}
-.empty{padding:56px 24px;text-align:center;color:var(--muted)}
-.empty h1{color:var(--ink);font-size:22px;margin:0 0 8px}.empty p{max-width:520px;margin:6px auto}
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:14px}
-.top h1{font-size:20px;margin:0;word-break:break-all}.top p{margin:2px 0 0;color:var(--muted);font-size:13px}
-.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line);color:var(--muted)}
-.pill.pub{background:var(--accent);border-color:var(--accent);color:#fff}
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
-.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:9px 14px;color:var(--muted)}
-.tabs button.on{border-color:var(--accent);color:var(--ink);font-weight:500}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stats div{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}.stats b{display:block;font-size:20px}.stats span{font-size:12px;color:var(--muted)}
-#graph,.graph{height:400px;border:1px solid var(--line);border-radius:var(--r);background:#FAFBFC}
-.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:8px 0 18px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+:root{--bg:#FAFBFC;--card:#FFFFFF;--text:#24292F;--muted:#57606A;--line:#D0D7DE;--accent:#0969DA;--accent-subtle:#DDF4FF;--warn:#9A6700;--bad:#CF222E;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;--r:6px}
+*{box-sizing:border-box}body{margin:0;font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.45}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;gap:16px}
+header b{font-size:18px;letter-spacing:-.3px}header span{color:var(--muted);font-size:14px}
+.shell{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 53px)}
+aside{background:var(--card);border-right:1px solid var(--line);padding:20px}
+main{padding:24px 32px;max-width:1100px}
+h2{font-size:13px;text-transform:uppercase;color:var(--muted);letter-spacing:.5px;margin:18px 0 8px}h2:first-child{margin-top:0}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:10px}
+input,select,textarea{width:100%;padding:7px 10px;font-size:14px;border:1px solid var(--line);border-radius:var(--r);font-family:inherit;margin-top:4px}
+button{cursor:pointer;padding:8px 14px;font-size:14px;font-weight:500;border-radius:var(--r);border:1px solid var(--line);background:var(--card);color:var(--text);font-family:inherit}
+button:hover:not(:disabled){background:#F3F4F6}button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent);width:100%;margin-top:10px}
+button.primary:hover:not(:disabled){background:#0854B2}
+button.link{border:none;background:none;color:var(--accent);padding:0;font-size:13px;margin-top:8px;text-decoration:underline;cursor:pointer}
+button.link:hover{background:none;color:#0854B2}
+.err{color:var(--bad);font-size:13px;margin-top:8px;white-space:pre-wrap}
+.recent{list-style:none;padding:0;margin:0;font-size:13px}
+.recent li{padding:6px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;cursor:pointer}
+.recent li:hover{color:var(--accent)}
+.recent small{color:var(--muted)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:16px;flex-wrap:wrap}
+.top h1{margin:0;font-size:22px;letter-spacing:-.3px}
+.top p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;background:#EAEEF2;color:var(--muted);font-weight:500}
+.pill.pub{background:#DAFBE1;color:#1A7F37}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 14px;font-size:14px;color:var(--muted)}
+.tabs button.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.stats b{display:block;font-size:22px}
+.stats span{font-size:12px;color:var(--muted)}
+#graph,#vgraph{height:340px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:20px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:16px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}th{font-weight:500;color:var(--muted);font-size:13px}
 .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}.bar select{width:auto;margin:0}.bar .sp{flex:1}
 .card{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:12px}
@@ -51,7 +52,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .meta a{color:var(--accent)}
 .kv{font-size:14px;margin:3px 0}.kv b{font-weight:500}.kv.none{color:var(--muted)}
 .tag{font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid}
-.tag.confirmed{color:var(--accent);border-color:var(--accent)}.tag.inferred{color:var(--warn);border-color:var(--warn)}
+.tag.confirmed{color:var(--accent);border-color:var(--accent)}.tag.likely{color:#2563EB;border-color:#2563EB}.tag.inferred{color:var(--warn);border-color:var(--warn)}
 .tag.type{color:var(--muted);border-color:var(--line)}.tag.high{color:var(--bad);border-color:var(--bad)}
 .acts{display:flex;gap:8px;margin-top:10px}.acts button{padding:4px 12px;font-size:13px}
 .acts .ok{color:var(--accent);border-color:var(--accent)}.acts .no{color:var(--bad)}
@@ -65,12 +66,18 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <header><b>ContinuAI</b><span>Project knowledge handover</span></header>
 <div class="shell">
   <aside>
+    <h2>Account &amp; Repositories</h2>
+    <div id="auth-box" style="margin-bottom:12px">Loading connection…</div>
+    <label id="repo-drop-wrap" style="display:none">Your repositories
+      <select id="repo-select" onchange="if(this.value)$('#src').value=this.value"><option value="">Select a repository…</option></select>
+    </label>
     <h2>Connect a repository</h2>
     <label>Repository<input id="src" placeholder="github.com/owner/repo or a local path"></label>
     <label>Departing member (optional)<input id="dep" placeholder="Name as it appears in git"></label>
     <button class="primary" id="go">Analyze repository</button>
     <button class="link" id="demo">Try the sample project</button>
     <div class="err" id="err"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">You can revoke access any time in your GitHub/GitLab settings.</div>
     <h2>Your name</h2>
     <label>Recorded in the audit trail<input id="who" value="Team lead"></label>
     <h2>Recent handovers</h2>
@@ -84,7 +91,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;
 const GC = {person:"#16202B", ml:"#7B5EA7", backend:"#2F6F9F", frontend:"#C2703D", docs:"#7A8794", infra:"#8C8F3A", general:"#9AA5B1"};
 const ROLES = {lead:"Team lead (everything)", ml:"ML engineer", backend:"Backend engineer", frontend:"Frontend developer", docs:"Documentation", infra:"Infrastructure", general:"General"};
 const TYPES = {decision:"Decision", conflict:"Conflict", risk:"Risk", dependency:"Dependency", task:"Next step"};
-let id = null, D = null, S = "draft", SRC = "", tab = "map", editing = null, filt = {type:"all", conf:"all"};
+let id = null, D = null, S = "draft", SRC = "", tab = "map", editing = null, filt = {type:"all", conf:"all"}, userRoles = [];
 
 async function api(path, body) {
   const r = await fetch("/api" + path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : undefined);
@@ -93,6 +100,51 @@ async function api(path, body) {
   return j;
 }
 const who = () => $("#who").value.trim() || "Reviewer";
+
+async function loadAuth() {
+  try {
+    const me = await api("/me");
+    const ab = $("#auth-box");
+    if (me.logged_in) {
+      ab.innerHTML = `<div style="font-size:13px;margin-bottom:6px">Signed in as <b>${esc(me.account_login)}</b> (${esc(me.provider)})</div>
+        <button onclick="disconnect('${me.provider}')" style="padding:3px 8px;font-size:12px">Disconnect</button>`;
+      loadRepos();
+      loadUserRoles();
+    } else {
+      const ghOk = me.configured_providers.includes("github");
+      const glOk = me.configured_providers.includes("gitlab");
+      ab.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+        <a href="/auth/github/login" style="text-decoration:none"><button style="width:100%" ${ghOk ? "" : "disabled"}>Sign in with GitHub</button></a>
+        <a href="/auth/gitlab/login" style="text-decoration:none"><button style="width:100%" ${glOk ? "" : "disabled"}>Sign in with GitLab</button></a>
+      </div>`;
+    }
+  } catch (e) {
+    $("#auth-box").innerHTML = '<span style="color:var(--muted);font-size:12px">Offline / Guest mode</span>';
+  }
+}
+
+async function loadRepos() {
+  try {
+    const repos = await api("/repos");
+    if (repos && repos.length) {
+      const drop = $("#repo-select");
+      drop.innerHTML = '<option value="">Select a repository…</option>' + repos.map(r => `<option value="${esc(r.full_name)}">${esc(r.full_name)}${r.private ? " (private)" : ""}</option>`).join("");
+      $("#repo-drop-wrap").style.display = "block";
+    }
+  } catch (e) {}
+}
+
+async function loadUserRoles() {
+  try {
+    const r = await api("/rbac/sync", {});
+    userRoles = r.roles || [];
+  } catch (e) {}
+}
+
+async function disconnect(prov) {
+  await fetch(`/auth/${prov}/disconnect`, {method:"POST"});
+  window.location.reload();
+}
 
 async function run(source) {
   $("#err").textContent = ""; $("#go").disabled = true; $("#go").textContent = "Analyzing…";
@@ -109,19 +161,10 @@ async function recent() {
   $("#recent").innerHTML = rows.length ? rows.map(r => `<li data-id="${r.id}"><span>${esc(r.source.replace(/^https?:\/\/(www\.)?/, ""))}</span><small>${r.status}</small></li>`).join("") : '<li style="cursor:default"><small>Nothing yet</small></li>';
   document.querySelectorAll("#recent li[data-id]").forEach(li => li.onclick = () => open(li.dataset.id));
 }
-async function act(item_id, action, extra) {
-  try { D = await api(`/h/${id}/item`, {item_id, action, actor: who(), ...extra}); editing = null; render(); }
-  catch (e) { alert(e.message); }
-}
 
-function graph(el, g) {
-  const nodes = g.nodes.map(n => n.group === "person"
-    ? {id:n.id, label:n.label, shape:"box", color:{background:GC.person, border:GC.person}, font:{color:"#fff", size:13}, margin:8}
-    : {id:n.id, label:n.label, shape:"dot", size:10 + Math.min(n.value, 12) * 2, color:GC[n.group] || GC.general, font:{size:13, color:"#16202B"},
-       title:`${n.label}: ${n.value} commits, ${n.group}`});
-  const edges = g.edges.map(e => e.kind === "owns"
-    ? {from:e.from, to:e.to, width:.6 + e.value / 3, color:{color:"#B8C1CC"}}
-    : {from:e.from, to:e.to, width:1 + e.value, dashes:true, color:{color:"#0B6B5D"}, title:`${e.value} shared commits`});
+function graph(el, data) {
+  const nodes = data.nodes.map(n => ({id:n.id, label:n.label, color:{background:GC[n.group] || "#888", border:"#fff"}, font:{color:"#fff", size:12}, shape:"box", margin:8, value:n.value}));
+  const edges = data.edges.map(e => ({from:e.from, to:e.to, width:Math.min(e.value, 6), color:{color:"#8C959F", opacity:.6}, dashes:e.kind === "co-change"}));
   new vis.Network(el, {nodes:new vis.DataSet(nodes), edges:new vis.DataSet(edges)},
     {physics:{barnesHut:{gravitationalConstant:-5000, springLength:130}, stabilization:{iterations:150}}, interaction:{hover:true}});
 }
@@ -130,12 +173,17 @@ const legend = '<div class="legend">' + Object.entries(GC).map(([k, c]) => `<spa
 function card(i) {
   const ed = editing === i.id;
   const link = i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">commit ${i.sha.slice(0, 7)}</a>` : (i.sha ? `commit ${i.sha.slice(0, 7)}` : "");
-  const tags = `<span class="tag type">${TYPES[i.type]}</span><span class="tag ${i.confidence}">${i.confidence === "confirmed" ? "Confirmed from source" : "Inferred, not confirmed"}</span>` +
+  const confText = i.confidence === "confirmed" ? "Confirmed from source" : (i.confidence === "likely" ? "Likely (code & AST)" : "Inferred, not confirmed");
+  const pct = i.confidence_score !== undefined ? ` (${Math.round(i.confidence_score * 100)}%)` : "";
+  const jiraTag = i.jira_key ? `<span class="tag type" style="color:#0052CC;border-color:#0052CC">Jira: ${esc(i.jira_key)}</span>` : "";
+  const tags = `<span class="tag type">${TYPES[i.type]}</span><span class="tag ${i.confidence}">${confText}${pct}</span>${jiraTag}` +
     (i.priority === "high" ? '<span class="tag high">Departing member\'s task</span>' : "") + (i.edited ? '<span class="tag type">Edited</span>' : "");
   const body = ed ? `<div class="edit"><label>Title<textarea id="e-title">${esc(i.title)}</textarea></label><label>Why<textarea id="e-why">${esc(i.why)}</textarea></label><label>Alternatives considered<textarea id="e-alt">${esc(i.alternative)}</textarea></label></div>`
     : `<h3>${esc(i.title)}</h3><div class="meta">${i.author ? `<span>${esc(i.author)}</span>` : ""}${i.date ? `<span>${i.date}</span>` : ""}${link ? `<span>${link}</span>` : ""}<span>${esc((i.modules || []).join(", "))}</span></div>
     ${i.why ? `<div class="kv"><b>Why:</b> ${esc(i.why)}</div>` : '<div class="kv none">No reason stated in the source.</div>'}
-    ${i.type === "decision" ? (i.alternative ? `<div class="kv"><b>Alternative considered:</b> ${esc(i.alternative)}</div>` : '<div class="kv none">No alternative recorded.</div>') : ""}`;
+    ${i.type === "decision" ? (i.alternative ? `<div class="kv"><b>Alternative considered:</b> ${esc(i.alternative)}</div>` : '<div class="kv none">No alternative recorded.</div>') : ""}
+    ${i.trade_offs ? `<div class="kv"><b>Trade-offs:</b> ${esc(i.trade_offs)}</div>` : ""}
+    ${i.ast_summary ? `<div class="kv" style="font-size:12px;color:var(--muted)"><b>AST diff context:</b> ${esc(i.ast_summary)}</div>` : ""}`;
   const btns = S === "published" ? "" : ed
     ? `<button class="ok" onclick="act('${i.id}','edit',{title:$('#e-title').value,why:$('#e-why').value,alternative:$('#e-alt').value})">Save changes</button><button onclick="editing=null;render()">Cancel</button>`
     : `<button class="ok" onclick="act('${i.id}','approve')">Approve</button><button class="no" onclick="act('${i.id}','reject')">Reject</button><button onclick="editing='${i.id}';render()">Edit</button>${i.status !== "pending" ? `<button onclick="act('${i.id}','reset')">Reset</button>` : ""}`;
@@ -156,9 +204,10 @@ function render() {
   } else if (tab === "review" || tab === "tasks") {
     let list = items.filter(i => tab === "tasks" ? i.type === "task" : i.type !== "task");
     if (tab === "review") list = list.filter(i => (filt.type === "all" || i.type === filt.type) && (filt.conf === "all" || i.confidence === filt.conf));
+    const accessLine = userRoles.length ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">Your access: <b>${esc(userRoles.join(", "))}</b></div>` : "";
     pane.innerHTML = (tab === "review" ? `<div class="bar"><select onchange="filt.type=this.value;render()">${["all", "decision", "conflict", "risk", "dependency"].map(t => `<option value="${t}" ${filt.type === t ? "selected" : ""}>${t === "all" ? "All types" : TYPES[t]}</option>`).join("")}</select>
-      <select onchange="filt.conf=this.value;render()">${[["all", "All confidence"], ["confirmed", "Confirmed"], ["inferred", "Inferred"]].map(([v, l]) => `<option value="${v}" ${filt.conf === v ? "selected" : ""}>${l}</option>`).join("")}</select>
-      <span class="sp"></span><span class="tag type">${list.length} shown</span></div>` : `<div class="note">Work that commit messages mark as unfinished. Approve what the next owner should pick up.</div>`) +
+      <select onchange="filt.conf=this.value;render()">${[["all", "All confidence"], ["confirmed", "Confirmed"], ["likely", "Likely"], ["inferred", "Inferred"]].map(([v, l]) => `<option value="${v}" ${filt.conf === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <span class="sp"></span><span class="tag type">${list.length} shown</span></div>${accessLine}` : `<div class="note">Work that commit messages mark as unfinished. Approve what the next owner should pick up.</div>`) +
       (list.map(card).join("") || '<div class="empty">Nothing here for this repository.</div>');
   } else if (tab === "handover") {
     const n = items.filter(i => i.status === "approved").length;
@@ -166,6 +215,14 @@ function render() {
       ? `<div class="note">Only approved items reach the incoming person. ${n} approved, ${items.length - n} not yet approved or rejected. Publishing locks the review.</div><button class="primary" style="width:auto" ${n ? "" : "disabled"} onclick="publish()">Publish handover</button>`
       : `<div class="bar"><label style="margin:0">View as <select id="role" onchange="view()">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select></label></div>
          <div id="vgraph" class="graph"></div><div id="vitems" style="margin-top:16px"></div>
+         <div class="note" style="margin-top:16px"><b>Connected Integrations</b>
+           <div id="integ-status" style="margin-top:6px;font-size:13px;display:flex;gap:16px;flex-wrap:wrap">
+             <span>Slack: <button onclick="triggerInteg('slack')" style="padding:2px 8px;font-size:12px">Post / Retry</button></span>
+             <span>Jira: <button onclick="triggerInteg('jira')" style="padding:2px 8px;font-size:12px">Sync / Retry</button></span>
+             <span>Notion: <button onclick="triggerInteg('notion')" style="padding:2px 8px;font-size:12px">Export / Retry</button></span>
+           </div>
+           <div id="integ-msg" style="margin-top:6px;font-size:12px;color:var(--muted)"></div>
+         </div>
          <div class="note"><b>Confirm receipt</b><div class="bar" style="margin:8px 0 0"><input id="ackname" placeholder="Your name" style="width:220px;margin:0"><button onclick="ack()">Confirm receipt</button><span id="ackmsg" class="tag confirmed" hidden>Receipt logged</span></div></div>`;
     if (S === "published") view();
   } else {
@@ -173,15 +230,43 @@ function render() {
     api(`/h/${id}/log`).then(rows => $("#logbox").innerHTML = rows.map(r => `<div><span>${r.ts}</span><span>${esc(r.actor)}</span><b style="font-weight:400">${esc(r.detail)}</b></div>`).join(""));
   }
 }
+
+async function act(item_id, action, fields={}) {
+  try {
+    const data = await api(`/h/${id}/item`, {item_id, action, actor: who(), ...fields});
+    D = data; editing = null; render();
+  } catch (e) { alert(e.message); }
+}
+
 async function publish() {
   try { await api(`/h/${id}/publish`, {actor: who()}); S = "published"; render(); } catch (e) { alert(e.message); }
 }
+
 async function view() {
-  const role = $("#role").value, v = await api(`/h/${id}/view?role=${role}`);
-  $("#vitems").innerHTML = v.items.length ? v.items.map(card).join("") : '<div class="empty">No approved items for this role.</div>';
-  $("#vgraph").style.display = v.graph.nodes.length ? "" : "none";
-  if (v.graph.nodes.length) graph($("#vgraph"), v.graph);
+  const role = $("#role").value;
+  try {
+    const v = await api(`/h/${id}/view?role=${role}`);
+    $("#vitems").innerHTML = v.items.length ? v.items.map(card).join("") : '<div class="empty">No approved items for this role.</div>';
+    $("#vgraph").style.display = v.graph.nodes.length ? "" : "none";
+    if (v.graph.nodes.length) graph($("#vgraph"), v.graph);
+  } catch (e) {
+    $("#vitems").innerHTML = `<div class="empty" style="color:var(--bad)">${esc(e.message)}</div>`;
+    $("#vgraph").style.display = "none";
+  }
 }
+
+async function triggerInteg(name) {
+  $("#integ-msg").textContent = `Running ${name}…`;
+  try {
+    const r = await api(`/h/${id}/integrations/${name}`, {});
+    $("#integ-msg").textContent = `${name.toUpperCase()}: ${r.message || "Done"}`;
+    const h = await api(`/h/${id}`);
+    D = h.data; render();
+  } catch (e) {
+    $("#integ-msg").textContent = `Error: ${e.message}`;
+  }
+}
+
 async function ack() {
   try { await api(`/h/${id}/ack`, {name: $("#ackname").value, role: $("#role").value}); $("#ackmsg").hidden = false; }
   catch (e) { alert(e.message); }
@@ -194,7 +279,25 @@ $("#main").innerHTML = `<div class="empty"><h1>Hand over a project without losin
   <p>Connect a Git repository. ContinuAI maps who owns what, extracts why decisions were made, and marks every claim as confirmed or inferred.</p>
   <p>A team member reviews and approves the draft. The incoming person sees only what their role needs.</p>
   <p>Start with the sample project to see the full workflow.</p></div>`;
-recent();
+
+// Handle deep links: ?h=<id>&role=<role>
+(async () => {
+  await loadAuth();
+  await recent();
+  const params = new URLSearchParams(window.location.search);
+  const qh = params.get("h");
+  const qrole = params.get("role");
+  if (qh) {
+    try {
+      await open(qh);
+      if (qrole && S === "published") {
+        tab = "handover";
+        render();
+        if ($("#role")) { $("#role").value = qrole; view(); }
+      }
+    } catch (e) {}
+  }
+})();
 </script>
 </body>
 </html>

@@ -26,6 +26,43 @@ Optional: set `ANTHROPIC_API_KEY` to use Claude for decision extraction. Without
 
 Layout: `app.py` (API, SQLite), `analyzer.py` (analysis), `static/index.html` (UI).
 
+## Round 3 setup
+
+ContinuAI Round 3 adds a pluggable multi-provider LLM engine (Gemini, Anthropic, OpenAI), Python AST structural diff analysis, 3-tier graded confidence scoring, GitHub/GitLab OAuth 2.0 with Fernet-encrypted token storage, RBAC policy mapping from GitHub teams, and post-publish Slack, Jira, and Notion integrations.
+
+### 1. Environment Configuration (.env)
+Copy `.env.example` to `.env` and configure:
+- **LLM Engine**: `LLM_PROVIDER` (`gemini`, `anthropic`, `openai`, or `rule-based`), with corresponding `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`. Model names default to `gemini-3.5-flash`, `claude-3-5-sonnet-20241022`, or `gpt-4o-mini` (or override via `GEMINI_MODEL`, `ANTHROPIC_MODEL`, `OPENAI_MODEL`).
+- **Security & Encryption**: `FLASK_SECRET_KEY` (session signing hex) and `TOKEN_ENCRYPTION_KEY` (Fernet base64 key).
+- **OAuth 2.0 (GitHub / GitLab)**: `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. (Optional: `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_BASE`).
+- **Web App**: `BASE_URL` (e.g. `http://localhost:5000`) and `PORT` (default: 5000).
+- **Integrations (Optional)**:
+  - `SLACK_WEBHOOK_URL`: Slack Incoming Webhook URL.
+  - `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY`, `JIRA_ISSUE_TYPE` (default: Epic).
+  - `NOTION_TOKEN`, `NOTION_DATABASE_ID`, `NOTION_TITLE_PROP` (default: Name).
+  - `INTEGRATIONS_DRY_RUN=1`: Simulates external API calls without dispatching real requests.
+
+### 2. GitHub OAuth App Setup
+1. In GitHub, go to **Settings > Developer settings > OAuth Apps > New OAuth App**.
+2. Set **Application name** to `ContinuAI`.
+3. Set **Homepage URL** to your `BASE_URL` (e.g. `http://localhost:5000`).
+4. Set **Authorization callback URL** to:
+   ```
+   http://localhost:5000/auth/github/callback
+   ```
+   *(Or `<BASE_URL>/auth/github/callback` in production).*
+5. Save the generated **Client ID** and **Client Secret** into your `.env` file.
+
+### 3. Running the Test Suite
+```bash
+pytest -v
+```
+All unit and integration tests run with mocked external calls (zero API credits consumed).
+
+## Known limitations
+- **AST Diff Analysis**: Full syntactic AST analysis is implemented for Python source files using the Python standard library `ast` module. For JavaScript and TypeScript files, structural diff context (functions, classes, imports/requires) is extracted via lightweight regex heuristics; full tree-sitter JS/TS parsing is a planned future enhancement.
+- **Commit-driven Decision Mining**: Decision and architectural trade-off mining is driven by commit messages, multi-file diffs, and structural AST context. GitHub PR discussions and issue threads are planned for future direct ingestion.
+
 ## Deploy on Render
 1. Push this folder to a GitHub repository (public, so judges can open it).
 2. Render dashboard: New > Blueprint, select the repo. `render.yaml` sets everything up.
