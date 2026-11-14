@@ -44,13 +44,13 @@ def load_commits(source, token=None, provider=None):
     try:
         if re.match(r"^(https?://|git@)", src):
             tmp = tempfile.mkdtemp()
-            _git(["clone", "--bare", "--filter=blob:none", "--depth", "300", src, tmp], env=git_env)
+            _git(["clone", "--bare", "--depth", "50", src, tmp], env=git_env)
             path = tmp
         elif os.path.isdir(src):
             path = src
         else:
             raise ValueError("Enter a GitHub URL, owner/repo, a local repository path, or 'demo'.")
-        out = _git(["-C", path, "log", "-n", "300", "--name-only",
+        out = _git(["-C", path, "log", "-n", "50", "--name-only",
                     "--pretty=format:%x1d%H%x1f%an%x1f%aI%x1f%s%x1f%b%x1e"], env=git_env)
         
         commits = []

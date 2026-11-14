@@ -1,5 +1,6 @@
 """Tests for pluggable LLM providers with mocked HTTP calls."""
 import json
+import logging
 from unittest.mock import patch, MagicMock
 from llm.providers import (
     clean_json_response,
@@ -83,6 +84,11 @@ def test_gemini_provider_mocked(mock_post, monkeypatch):
     assert results[0]["decision"] == "Adopt SQLite for price store"
     assert results[0]["confidence_score"] == 0.92
 
+    # Verify key was sent via header, NOT query parameter in URL
+    call_url = mock_post.call_args[0][0]
+    assert "key=" not in call_url
+    assert mock_post.call_args[1]["headers"]["x-goog-api-key"] == "fake_key"
+
 
 @patch("requests.post")
 def test_anthropic_provider_mocked(mock_post, monkeypatch):
@@ -160,3 +166,28 @@ def test_hybrid_fallback_on_api_error(mock_post, monkeypatch):
     assert "fallback" in engine.lower() or "rule-based" in engine.lower()
     assert len(results) >= 1
     assert results[0]["sha"] == "aabbccdd"
+
+
+def test_failing_provider_logs_contain_no_keys(caplog, monkeypatch):
+    secret_key_val = "SECRET_GEMINI_KEY_ABC123XYZ"
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", secret_key_val)
+
+    with patch("requests.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_resp.reason = "Not Found"
+        mock_post.return_value = mock_resp
+
+        with caplog.at_level(logging.WARNING):
+            commits = [{"sha": "12345678", "subject": "Test Commit", "body": "", "files": []}]
+            results, engine = extract_decisions_hybrid(commits)
+
+        log_text = caplog.text
+        assert secret_key_val not in log_text
+        assert "key=" not in log_text
+        assert "x-goog-api-key" not in log_text
+        # Ensure requests.post was called with header, NOT with query param
+        call_args, call_kwargs = mock_post.call_args
+        assert "key=" not in call_args[0]
+        assert call_kwargs["headers"].get("x-goog-api-key") == secret_key_val

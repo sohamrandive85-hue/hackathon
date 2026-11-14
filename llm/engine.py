@@ -1,6 +1,7 @@
 """LLM Engine: Orchestrates provider selection, AST diff enrichment, retries and fallbacks."""
 import logging
 import os
+import re
 from .providers import (
     BaseLLMProvider,
     GeminiProvider,
@@ -61,7 +62,9 @@ def extract_decisions_hybrid(commits: list[dict], repo_path: str = "") -> tuple[
             if results:
                 return results, engine_name
         except Exception as e:
-            logger.warning(f"Provider {engine_name} failed: {e}. Falling back to Rule-based.")
+            clean_err = re.sub(r"https?://[^\s]+", "[REDACTED_URL]", str(e))
+            clean_err = re.sub(r"key=[^\s&]+", "key=[REDACTED]", clean_err)
+            logger.warning(f"Provider {engine_name} failed: {clean_err}. Falling back to Rule-based.")
             engine_name = f"Rule-based (fallback from {engine_name})"
 
     # Fallback to rule-based

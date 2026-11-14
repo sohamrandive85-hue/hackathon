@@ -32,7 +32,7 @@ ContinuAI Round 3 adds a pluggable multi-provider LLM engine (Gemini, Anthropic,
 
 ### 1. Environment Configuration (.env)
 Copy `.env.example` to `.env` and configure:
-- **LLM Engine**: `LLM_PROVIDER` (`gemini`, `anthropic`, `openai`, or `rule-based`), with corresponding `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`. Model names default to `gemini-2.5-flash`, `claude-3-5-sonnet-20241022`, or `gpt-4o-mini` (or override via `GEMINI_MODEL`, `ANTHROPIC_MODEL`, `OPENAI_MODEL`).
+- **LLM Engine**: `LLM_PROVIDER` (`gemini`, `anthropic`, `openai`, or `rule-based`), with corresponding `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`. Model names default to `gemini-3.5-flash`, `claude-3-5-sonnet-20241022`, or `gpt-4o-mini` (or override via `GEMINI_MODEL`, `ANTHROPIC_MODEL`, `OPENAI_MODEL`).
 - **Security & Encryption**: `FLASK_SECRET_KEY` (session signing hex) and `TOKEN_ENCRYPTION_KEY` (Fernet base64 key).
 - **OAuth 2.0 (GitHub / GitLab)**: `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. (Optional: `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_BASE`).
 - **Web App**: `BASE_URL` (e.g. `http://localhost:5000`) and `PORT` (default: 5000).
@@ -58,6 +58,10 @@ Copy `.env.example` to `.env` and configure:
 pytest -v
 ```
 All unit and integration tests run with mocked external calls (zero API credits consumed).
+
+## Known limitations
+- **AST Diff Analysis**: Full syntactic AST analysis is implemented for Python source files using the Python standard library `ast` module. For JavaScript and TypeScript files, structural diff context (functions, classes, imports/requires) is extracted via lightweight regex heuristics; full tree-sitter JS/TS parsing is a planned future enhancement.
+- **Commit-driven Decision Mining**: Decision and architectural trade-off mining is driven by commit messages, multi-file diffs, and structural AST context. GitHub PR discussions and issue threads are planned for future direct ingestion.
 
 ## Deploy on Render
 1. Push this folder to a GitHub repository (public, so judges can open it).

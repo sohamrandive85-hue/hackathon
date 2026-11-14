@@ -129,10 +129,11 @@ def oauth_callback(p):
     headers = {"Accept": "application/json"}
     try:
         r = requests.post(cfg["token_url"], data=token_payload, headers=headers, timeout=20)
-        r.raise_for_status()
+        if r.status_code != 200:
+            return jsonify(error=f"Token exchange failed: HTTP {r.status_code} {r.reason}"), 400
         token_data = r.json()
-    except Exception as e:
-        return jsonify(error=f"Token exchange failed: {e}"), 400
+    except Exception:
+        return jsonify(error="Token exchange failed: connection error"), 400
 
     access_token = token_data.get("access_token")
     if not access_token:
@@ -147,10 +148,11 @@ def oauth_callback(p):
         auth_header["Authorization"] = f"token {access_token}"
     try:
         ur = requests.get(cfg["user_url"], headers=auth_header, timeout=15)
-        ur.raise_for_status()
+        if ur.status_code != 200:
+            return jsonify(error=f"Failed to fetch user profile: HTTP {ur.status_code} {ur.reason}"), 400
         user_info = ur.json()
-    except Exception as e:
-        return jsonify(error=f"Failed to fetch user profile: {e}"), 400
+    except Exception:
+        return jsonify(error="Failed to fetch user profile: connection error"), 400
 
     account_login = user_info.get("login") or user_info.get("username") or str(user_info.get("id"))
     conn_id = save_connection(
@@ -251,7 +253,8 @@ def api_repos():
         if r.status_code == 401:
             set_connection_status(conn["id"], "needs_reconnect")
             return jsonify([])
-        r.raise_for_status()
+        if r.status_code != 200:
+            return jsonify([])
         raw_list = r.json()
         if not isinstance(raw_list, list):
             return jsonify([])

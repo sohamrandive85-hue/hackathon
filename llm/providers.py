@@ -11,7 +11,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.5-flash",
+    "gemini": "gemini-3.5-flash",
     "anthropic": "claude-3-5-sonnet-20241022",
     "openai": "gpt-4o-mini",
 }
@@ -109,7 +109,12 @@ class GeminiProvider(BaseLLMProvider):
         if not self.is_configured():
             return []
         prompt = self._build_prompt(commits_with_ast)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+        # Never send API keys in URL query parameters. Always send in headers.
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        headers = {
+            "x-goog-api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -118,21 +123,26 @@ class GeminiProvider(BaseLLMProvider):
             },
         }
 
-        # Timeout & retry loop
+        # Timeout & retry loop: retry only on 429 and 5xx; never retry on 400/401/403/404
         for attempt in range(3):
             try:
-                r = requests.post(url, json=payload, timeout=45)
+                r = requests.post(url, headers=headers, json=payload, timeout=45)
                 if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                r.raise_for_status()
+                if r.status_code != 200:
+                    err_msg = f"HTTP {r.status_code} {r.reason}"
+                    logger.warning(f"Gemini API attempt {attempt + 1} failed: {err_msg}")
+                    raise RuntimeError(f"Gemini API error: {err_msg}")
                 data = r.json()
                 text = data["candidates"][0]["content"]["parts"][0]["text"]
                 return clean_json_response(text)
             except Exception as e:
-                logger.warning(f"Gemini API attempt {attempt + 1} failed: {e}")
-                if attempt == 2:
-                    raise
+                # Wrap error message to never leak URL or headers
+                clean_msg = f"HTTP error during Gemini request" if not isinstance(e, RuntimeError) else str(e)
+                logger.warning(f"Gemini API attempt {attempt + 1} failed: {clean_msg}")
+                if attempt == 2 or (isinstance(e, RuntimeError) and "HTTP 4" in str(e) and "429" not in str(e)):
+                    raise RuntimeError(clean_msg)
         return []
 
 
@@ -172,13 +182,17 @@ class AnthropicProvider(BaseLLMProvider):
                 if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                r.raise_for_status()
+                if r.status_code != 200:
+                    err_msg = f"HTTP {r.status_code} {r.reason}"
+                    logger.warning(f"Anthropic API attempt {attempt + 1} failed: {err_msg}")
+                    raise RuntimeError(f"Anthropic API error: {err_msg}")
                 text = r.json()["content"][0]["text"]
                 return clean_json_response(text)
             except Exception as e:
-                logger.warning(f"Anthropic API attempt {attempt + 1} failed: {e}")
-                if attempt == 2:
-                    raise
+                clean_msg = f"HTTP error during Anthropic request" if not isinstance(e, RuntimeError) else str(e)
+                logger.warning(f"Anthropic API attempt {attempt + 1} failed: {clean_msg}")
+                if attempt == 2 or (isinstance(e, RuntimeError) and "HTTP 4" in str(e) and "429" not in str(e)):
+                    raise RuntimeError(clean_msg)
         return []
 
 
@@ -224,13 +238,17 @@ class OpenAIProvider(BaseLLMProvider):
                 if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                r.raise_for_status()
+                if r.status_code != 200:
+                    err_msg = f"HTTP {r.status_code} {r.reason}"
+                    logger.warning(f"OpenAI API attempt {attempt + 1} failed: {err_msg}")
+                    raise RuntimeError(f"OpenAI API error: {err_msg}")
                 content = r.json()["choices"][0]["message"]["content"]
                 return clean_json_response(content)
             except Exception as e:
-                logger.warning(f"OpenAI API attempt {attempt + 1} failed: {e}")
-                if attempt == 2:
-                    raise
+                clean_msg = f"HTTP error during OpenAI request" if not isinstance(e, RuntimeError) else str(e)
+                logger.warning(f"OpenAI API attempt {attempt + 1} failed: {clean_msg}")
+                if attempt == 2 or (isinstance(e, RuntimeError) and "HTTP 4" in str(e) and "429" not in str(e)):
+                    raise RuntimeError(clean_msg)
         return []
 
 

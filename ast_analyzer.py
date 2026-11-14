@@ -1,4 +1,4 @@
-"""AST structural analysis module for Python code changes.
+"""AST and structural code analysis module for Python and JavaScript/TypeScript.
 Extracts touched functions, classes, changed signatures, and import diffs.
 """
 import ast
@@ -79,31 +79,52 @@ def diff_python_code(old_code: str, new_code: str) -> dict:
 
 
 def parse_diff_lines(diff_text: str) -> dict:
-    """Heuristic AST extraction from patch diff text when full source is unavailable."""
+    """Heuristic structural extraction from unified diff lines for Python, JavaScript, and TypeScript."""
     added_funcs = []
     modified_signatures = []
     added_classes = []
     added_imports = []
     removed_imports = []
 
-    fn_def = re.compile(r"^\+\s*(?:async\s+)?def\s+([a-zA-Z_]\w*\s*\([^)]*\))")
-    cls_def = re.compile(r"^\+\s*class\s+([a-zA-Z_]\w*)")
-    imp_add = re.compile(r"^\+\s*(?:import\s+([\w, ]+)|from\s+([\w.]+)\s+import\s+([\w, *]+))")
-    imp_rem = re.compile(r"^-\s*(?:import\s+([\w, ]+)|from\s+([\w.]+)\s+import\s+([\w, *]+))")
+    # Matches Python def, and JS/TS function/arrow functions
+    fn_def = re.compile(
+        r"^\+\s*(?:async\s+)?(?:def\s+([a-zA-Z_]\w*\s*\([^)]*\))|"
+        r"(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z_]\w*\s*\([^)]*\))|"
+        r"(?:const|let|var)\s+([a-zA-Z_]\w*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)"
+    )
+    # Matches Python and JS/TS classes
+    cls_def = re.compile(r"^\+\s*(?:export\s+)?class\s+([a-zA-Z_]\w*)")
+    # Matches Python import/from and JS/TS import/require
+    imp_add = re.compile(
+        r"^\+\s*(?:import\s+(?:[\w{},*\s]+from\s+)?['\"]([^'\"]+)['\"]|"
+        r"(?:const|let|var)\s+[\w{},*\s]+\s*=\s*require\(['\"]([^'\"]+)['\"]\)|"
+        r"import\s+([\w, ]+)|from\s+([\w.]+)\s+import\s+([\w, *]+))"
+    )
+    imp_rem = re.compile(
+        r"^-\s*(?:import\s+(?:[\w{},*\s]+from\s+)?['\"]([^'\"]+)['\"]|"
+        r"(?:const|let|var)\s+[\w{},*\s]+\s*=\s*require\(['\"]([^'\"]+)['\"]\)|"
+        r"import\s+([\w, ]+)|from\s+([\w.]+)\s+import\s+([\w, *]+))"
+    )
 
     for line in diff_text.splitlines():
         mf = fn_def.match(line)
         if mf:
-            added_funcs.append(mf.group(1).strip())
+            name = next((g for g in mf.groups() if g), None)
+            if name:
+                added_funcs.append(name.strip())
         mc = cls_def.match(line)
         if mc:
             added_classes.append(mc.group(1).strip())
         ma = imp_add.match(line)
         if ma:
-            added_imports.append((ma.group(1) or f"{ma.group(2)}.{ma.group(3)}").strip())
+            mod = next((g for g in ma.groups() if g), None)
+            if mod:
+                added_imports.append(mod.strip())
         mr = imp_rem.match(line)
         if mr:
-            removed_imports.append((mr.group(1) or f"{mr.group(2)}.{mr.group(3)}").strip())
+            mod = next((g for g in mr.groups() if g), None)
+            if mod:
+                removed_imports.append(mod.strip())
 
     return {
         "added_functions": added_funcs[:8],
@@ -117,13 +138,13 @@ def parse_diff_lines(diff_text: str) -> dict:
 
 
 def analyze_commit_ast(repo_path: str, sha: str, touched_files: list[str]) -> dict:
-    """Analyze AST changes for a commit across touched Python files."""
-    py_files = [f for f in touched_files if f.endswith(".py")]
-    if not py_files or not repo_path or repo_path == "demo":
+    """Analyze AST changes for a commit across touched Python and JS/TS files."""
+    code_files = [f for f in touched_files if f.endswith((".py", ".js", ".jsx", ".ts", ".tsx"))]
+    if not code_files or not repo_path or repo_path == "demo":
         return {}
 
     summary = {
-        "python_files": py_files,
+        "code_files": code_files,
         "added_functions": [],
         "modified_signatures": [],
         "added_classes": [],
@@ -132,9 +153,9 @@ def analyze_commit_ast(repo_path: str, sha: str, touched_files: list[str]) -> di
     }
 
     try:
-        # Try git diff for the commit
+        # Use git show -U0 --format="" which safely handles all commits including initial root commit
         r = subprocess.run(
-            ["git", "-C", repo_path, "diff", "-U0", f"{sha}~1..{sha}", "--"] + py_files,
+            ["git", "-C", repo_path, "show", "-U0", "--format=", sha, "--"] + code_files,
             capture_output=True, text=True, timeout=10
         )
         if r.returncode == 0 and r.stdout:

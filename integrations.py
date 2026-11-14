@@ -93,9 +93,9 @@ def send_slack_handover(hid: int, data: dict, dry_run: bool = False) -> tuple[bo
         r = requests.post(webhook_url, json=payload, timeout=10)
         if r.status_code == 200:
             return True, "Slack handover notification posted successfully"
-        return False, f"Slack error status {r.status_code}"
-    except Exception as e:
-        return False, f"Slack notification failed: {e}"
+        return False, f"Slack HTTP {r.status_code} {r.reason}"
+    except Exception:
+        return False, "Slack notification failed: network error"
 
 
 def sync_jira_tasks(hid: int, data: dict, dry_run: bool = False) -> tuple[bool, str]:
@@ -171,9 +171,9 @@ def sync_jira_tasks(hid: int, data: dict, dry_run: bool = False) -> tuple[bool, 
                 item["jira_key"] = key
                 synced_keys.append(key)
             else:
-                logger.warning(f"Jira issue creation failed ({r.status_code}): {r.text[:200]}")
-        except Exception as e:
-            logger.warning(f"Jira request error: {e}")
+                logger.warning(f"Jira issue creation failed: HTTP {r.status_code} {r.reason}")
+        except Exception:
+            logger.warning("Jira request error: network failure")
 
     if dry:
         return True, f"Jira tasks created: {', '.join(synced_keys)} (dry-run mode)"
@@ -229,8 +229,10 @@ def sync_notion_tasks(hid: int, data: dict, dry_run: bool = False) -> tuple[bool
                 page_id = r.json().get("id")
                 item["notion_page_id"] = page_id
                 synced_pages.append(page_id)
-        except Exception as e:
-            logger.warning(f"Notion request error: {e}")
+            else:
+                logger.warning(f"Notion page creation failed: HTTP {r.status_code} {r.reason}")
+        except Exception:
+            logger.warning("Notion request error: network failure")
 
     if dry:
         return True, f"Notion pages created: {len(synced_pages)} items (dry-run mode)"
